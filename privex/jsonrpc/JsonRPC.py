@@ -72,7 +72,7 @@ class JsonRPC:
         host = '{}:{}'.format(self.hostname, self.port)
         if self.username is not None:
             host = '{}:{}@{}:{}'.format(self.username, self.password, self.hostname, self.port)
-        url = url[1:] if url[0] == '/' else url  # Strip starting / of URL
+        url = url[1:] if len(url) > 0 and url[0] == '/' else url  # Strip starting / of URL
 
         return "{}://{}/{}".format(proto, host, url)
 
