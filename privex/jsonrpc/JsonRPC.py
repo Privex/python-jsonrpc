@@ -64,6 +64,8 @@ class JsonRPC:
         self.port = port
         self.ssl = ssl
         self.endpoint = url
+        self.headers = {'content-type': 'application/json'}
+        self.method_base = ''
 
     @property
     def url(self):
@@ -81,7 +83,13 @@ class JsonRPC:
         JsonRPC.LAST_ID += 1
         return JsonRPC.LAST_ID
 
-    def call(self, method, *params, **dicdata):
+    def add_headers(self, custom_headers):
+        self.headers.update(custom_headers)
+
+    def set_method_base(self, method_base):
+        self.method_base = method_base
+    
+    def call(self, method, method_base='', *params, **dicdata):
         """
         Calls a JSON RPC method with method 'params' being the positional args passed as a list.
 
@@ -95,8 +103,9 @@ class JsonRPC:
         :raises RPCException: When an RPC call returns with a non-null/non-false 'error' key
         :return: dict() or list() of results, depending on what format the method returns.
         """
-        headers = {'content-type': 'application/json'}
+        # headers = {'content-type': 'application/json'}
 
+        method = self.method_base+'/'+method if self.method_base else method
         payload = {
             "method": method,
             "params": list(params),
@@ -109,7 +118,8 @@ class JsonRPC:
         r = None
         try:
             log.debug('Sending JsonRPC request to %s with payload: %s', self.url, payload)
-            r = self.req.post(self.url, data=json.dumps(payload), headers=headers, timeout=self.timeout)
+            log.debug('Using headers: %s', self.headers)
+            r = self.req.post(self.url, data=json.dumps(payload), headers=self.headers, timeout=self.timeout)
             response = r.json()
         except JSONDecodeError as e:
             log.warning('JSONDecodeError while querying %s', self.url)
