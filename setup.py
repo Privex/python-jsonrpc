@@ -36,13 +36,15 @@ otherwise to promote the sale, use or other dealings in this Software without pr
 
 from setuptools import setup, find_packages
 
+from privex.jsonrpc import VERSION
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     name='privex_jsonrpc',
 
-    version='1.1.0',
+    version=VERSION,
 
     description='A simple library for easy querying of JsonRPC services',
     long_description=long_description,
@@ -58,6 +60,9 @@ setup(
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],

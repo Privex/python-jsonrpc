@@ -1,5 +1,7 @@
 [![PyPi Version](https://img.shields.io/pypi/v/privex-jsonrpc.svg)](https://pypi.org/project/privex-jsonrpc/)
-![License Button](https://img.shields.io/pypi/l/privex-jsonrpc)
+![License Button](https://img.shields.io/pypi/l/privex-jsonrpc) ![PyPI - Downloads](https://img.shields.io/pypi/dm/privex-jsonrpc)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/privex-jsonrpc) 
+![GitHub last commit](https://img.shields.io/github/last-commit/Privex/python-jsonrpc)
 
 # Simple Python JsonRPC
 ### A small library for interacting with JsonRPC services
