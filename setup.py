@@ -42,7 +42,7 @@ with open("README.md", "r") as fh:
 setup(
     name='privex_jsonrpc',
 
-    version='1.0.2',
+    version='1.1.0',
 
     description='A simple library for easy querying of JsonRPC services',
     long_description=long_description,

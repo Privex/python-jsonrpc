@@ -1,3 +1,6 @@
+[![PyPi Version](https://img.shields.io/pypi/v/privex-jsonrpc.svg)](https://pypi.org/project/privex-jsonrpc/)
+![License Button](https://img.shields.io/pypi/l/privex-jsonrpc)
+
 # Simple Python JsonRPC
 ### A small library for interacting with JsonRPC services
 ### Includes some helper classes for various cryptocurrency daemons inc. `bitcoind` and `litecoind`
@@ -46,6 +49,9 @@ The main classes included are:
     SteemEngineRPC - For interacting with SteemSmartContracts RPC (https://github.com/harpagon210/steemsmartcontracts)
                      Includes pre-defined methods for interacting with SSC RPC. 
                      Default host: https://api.steem-engine.com
+    
+    MoneroRPC      - For interacting with Monero Wallet RPC, includes various pre-defined methods to make things easier.
+
 ```
 
 

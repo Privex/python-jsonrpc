@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal
 from privex.jsonrpc.JsonRPC import JsonRPC
-from typing import List, Union
+from typing import List, Union, Dict
 
 log = logging.getLogger(__name__)
 
@@ -19,8 +19,12 @@ class BitcoinRPC(JsonRPC):
         >>>  j.getbalance()
         Decimal(0.2456337)
     """
-    def __init__(self, hostname='127.0.0.1', port=8332, username=None, password=None, ssl=False, timeout=120):
-        super().__init__(hostname, port, username, password, ssl, timeout)
+    def __init__(self, hostname='127.0.0.1', port=8332, username=None, password=None, ssl=False, timeout=120, 
+                 url: str = '', auth: str = 'plain'):
+        super().__init__(
+            hostname=hostname, port=port, username=username, password=password, 
+            ssl=ssl, timeout=timeout, url=url, auth=auth
+        )
 
     def getnewaddress(self, account="", address_type=None) -> str:
         """
@@ -153,8 +157,12 @@ class LitecoinRPC(BitcoinRPC):
     """
     Wrapper class for JsonRPC, with default host 127.0.0.1 and port 8332
     """
-    def __init__(self, hostname='127.0.0.1', port=9332, username=None, password=None, ssl=False, timeout=120):
-        super().__init__(hostname, port, username, password, ssl, timeout)
+    def __init__(self, hostname='127.0.0.1', port=9332, username=None, password=None, ssl=False, timeout=120,
+                 url: str = '', auth: str = 'plain'):
+        super().__init__(
+            hostname=hostname, port=port, username=username, password=password, 
+            ssl=ssl, timeout=timeout, url=url, auth=auth
+        )
 
 
 class SteemEngineRPC(JsonRPC):
@@ -176,8 +184,11 @@ class SteemEngineRPC(JsonRPC):
     DEF_HOST = 'api.steem-engine.com'
     DEF_URL = '/rpc/contracts'
 
-    def __init__(self, hostname=DEF_HOST, port=443, username=None, password=None, ssl=True, timeout=120, url=DEF_URL):
-        super().__init__(hostname, port=port, username=username, password=password, ssl=ssl, timeout=timeout, url=url)
+    def __init__(self, hostname=DEF_HOST, port=443, username=None, password=None, ssl=True, timeout=120, url=DEF_URL, auth='plain'):
+        super().__init__(
+            hostname=hostname, port=port, username=username, password=password, 
+            ssl=ssl, timeout=timeout, url=url, auth=auth
+        )
 
     def getcontract(self, name: str) -> dict:
         """

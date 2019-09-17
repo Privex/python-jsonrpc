@@ -2,6 +2,8 @@ import logging
 import sys
 from .JsonRPC import JsonRPC, RPCException
 from .helpers import BitcoinRPC, LitecoinRPC, SteemEngineRPC
+from .MoneroRPC import MoneroRPC
+from .objects import MoneroPayment, ObjBase
 
 name = 'jsonrpc'
 

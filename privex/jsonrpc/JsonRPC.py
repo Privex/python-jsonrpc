@@ -1,8 +1,10 @@
 import json
 import requests
 import logging
+from requests.auth import HTTPDigestAuth
 from json import JSONDecodeError
-from _decimal import Decimal
+from decimal import Decimal
+from typing import Union, List, Dict
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +47,8 @@ class JsonRPC:
     # Since this is a static attribute, it will be shared across ALL instances of the class.
     req = requests.Session()
 
-    def __init__(self, hostname, port: int = 80, username=None, password=None, ssl=False, timeout=120, url: str = ''):
+    def __init__(self, hostname, port: int = 80, username=None, password=None, ssl=False, timeout=120, 
+                 url: str = '', auth: str = 'plain'):
         """
         Configure the remote JSON RPC server settings
 
@@ -56,6 +59,7 @@ class JsonRPC:
         :param ssl:      If set to True, will use https for requests. Default is false - use plain http
         :param timeout:  If the server stops sending us data for this many seconds, abort and throw an exception
         :param url:      The URL to query, e.g. api/v1/test (starting /'s will automatically be removed)
+        :param str auth: HTTP Authentication type - either ``plain`` (default) or ``digest``
         """
         self.timeout = timeout
         self.hostname = hostname
@@ -64,13 +68,17 @@ class JsonRPC:
         self.port = port
         self.ssl = ssl
         self.endpoint = url
+        self.auth = auth = auth.lower()
+        if auth not in ['plain', 'digest']:
+            raise AttributeError('Attribute "auth" must be either "plain" or "basic".')
+        self.headers = {'content-type': 'application/json'}
 
     @property
     def url(self):
         url = self.endpoint
         proto = 'https' if self.ssl else 'http'
         host = '{}:{}'.format(self.hostname, self.port)
-        if self.username is not None:
+        if self.username is not None and self.auth == 'plain':
             host = '{}:{}@{}:{}'.format(self.username, self.password, self.hostname, self.port)
         url = url[1:] if len(url) > 0 and url[0] == '/' else url  # Strip starting / of URL
 
@@ -81,7 +89,71 @@ class JsonRPC:
         JsonRPC.LAST_ID += 1
         return JsonRPC.LAST_ID
 
-    def call(self, method, *params, **dicdata):
+    def _call(self, method: str, params: Union[dict, list] = [], jid: int = None, del_params=False, 
+              raise_status=True) -> Union[dict, list]:
+        """
+        This is an internal function used by :py:meth:`.call` which handles the actual JsonRPC call.
+
+        Some of the few reasons that you may wish to use ``_call`` directly instead of :py:meth:`.call` :
+        
+         - Need to specify parameters directly, e.g. blank JSON dict params ``{}``
+         - Need to control the JsonRPC request ID
+         - Need to read the original JsonRPC JSON response, not just the ``result`` key
+         - Need to ignore or have custom handling for the ``error`` field in the response
+        
+        Examples:
+
+            >>> j = JsonRPC('127.0.0.1', 8080)
+            >>> # Simple call
+            >>> res = j._call('get_user', ['john'])
+            >>> print(res['result'])
+            {'name': 'john', 'age': 30}
+            >>> # Call with dict params, and custom JsonRPC request ID
+            >>> res = j._call('my_query', dict(user='dave', age=25), jid=3)
+            >>> print(res['id'])
+            3
+
+        :param str method:               JSON RPC method to call
+        :param Union[dict,list] params:  Parameters to be passed as 'params' in the JSON request body (will not be casted)
+        :param int jid:                  Optional JSON Request ID, if not specified will use :py:meth:`.next_id`
+        :param bool del_params:          (Default: ``False``) If True, will remove ``params`` entirely from the request.
+        :param bool raise_status:        (Default: ``True``) If True, will call ``.raise_for_status()`` after the request, 
+                                         causing a HTTPError to be raised for non-200 responses
+        
+        :raises requests.exceptions.HTTPError: If ``raise_status`` is True, HTTPError will be raised for non-200 responses.
+        
+        :return Union[dict,list] result: The parsed JSON response as a dict/list (_call requires you to extract ``result`` yourself)
+        """
+        headers = self.headers
+
+        payload = {
+            "method": method,
+            "params": params,
+            "jsonrpc": "2.0",
+            "id": self.next_id if jid is None else jid,
+        }
+        if del_params:   # If del_params is True, then we need to remove 'params' from the request completely.
+            del payload['params']
+
+        r = None
+        try:
+            log.debug('Sending JsonRPC request to %s with payload: %s', self.url, payload)
+            req_args = dict(data=json.dumps(payload), headers=headers, timeout=self.timeout)
+            if self.auth == 'digest' and self.username is not None:
+                req_args['auth'] = HTTPDigestAuth(self.username, self.password)
+            r = self.req.post(self.url, **req_args)
+            if raise_status:
+                r.raise_for_status()
+            response = r.json()
+            return response
+        except JSONDecodeError as e:
+            log.warning('JSONDecodeError while querying %s', self.url)
+            log.warning('Params: %s', params)
+            t = r.text.decode('utf-8') if type(r.text) is bytes else str(r.text)
+            log.warning('Raw response data was: %s', t)
+            raise e
+
+    def call(self, method, *params, **dicdata) -> Union[dict, list]:
         """
         Calls a JSON RPC method with method 'params' being the positional args passed as a list.
 
@@ -92,31 +164,17 @@ class JsonRPC:
         :param method: JSON RPC method to call
         :param params: Parameters to be passed as a list as 'params' in the JSON request body
         :param dicdata: Arguments to be passed as a dict as 'params' in the JSON request body (overrides params)
+
         :raises RPCException: When an RPC call returns with a non-null/non-false 'error' key
+        :raises requests.exceptions.HTTPError: Raised if the JsonRPC call resulted in a non-200 response.
+
         :return: dict() or list() of results, depending on what format the method returns.
         """
-        headers = {'content-type': 'application/json'}
-
-        payload = {
-            "method": method,
-            "params": list(params),
-            "jsonrpc": "2.0",
-            "id": self.next_id,
-        }
+        
         # If kwargs are passed, payload params is a dictionary of the kwargs instead of positionals
-        if len(dicdata.keys()) > 0:
-            payload['params'] = dict(dicdata)
-        r = None
-        try:
-            log.debug('Sending JsonRPC request to %s with payload: %s', self.url, payload)
-            r = self.req.post(self.url, data=json.dumps(payload), headers=headers, timeout=self.timeout)
-            response = r.json()
-        except JSONDecodeError as e:
-            log.warning('JSONDecodeError while querying %s', self.url)
-            log.warning('Params: %s / DicData: %s', params, dicdata)
-            t = r.text.decode('utf-8') if type(r.text) is bytes else str(r.text)
-            log.warning('Raw response data was: %s', t)
-            raise e
+        
+        _params = dict(dicdata) if len(dicdata.keys()) > 0 else list(params)
+        response = self._call(method=method, params=_params, raise_status=True)
 
         if 'error' in response and response['error'] not in [None, False]:
             raise RPCException(response['error'])
