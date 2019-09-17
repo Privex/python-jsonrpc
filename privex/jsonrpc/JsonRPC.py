@@ -72,6 +72,7 @@ class JsonRPC:
         if auth not in ['plain', 'digest']:
             raise AttributeError('Attribute "auth" must be either "plain" or "basic".')
         self.headers = {'content-type': 'application/json'}
+        self.method_base = ''
 
     @property
     def url(self):
@@ -89,6 +90,12 @@ class JsonRPC:
         JsonRPC.LAST_ID += 1
         return JsonRPC.LAST_ID
 
+    def add_headers(self, custom_headers):
+        self.headers.update(custom_headers)
+
+    def set_method_base(self, method_base):
+        self.method_base = method_base
+    
     def _call(self, method: str, params: Union[dict, list] = [], jid: int = None, del_params=False, 
               raise_status=True) -> Union[dict, list]:
         """
@@ -171,8 +178,9 @@ class JsonRPC:
         :return: dict() or list() of results, depending on what format the method returns.
         """
         
-        # If kwargs are passed, payload params is a dictionary of the kwargs instead of positionals
+        method = self.method_base+'/'+method if self.method_base else method
         
+        # If kwargs are passed, payload params is a dictionary of the kwargs instead of positionals
         _params = dict(dicdata) if len(dicdata.keys()) > 0 else list(params)
         response = self._call(method=method, params=_params, raise_status=True)
 
