@@ -266,3 +266,19 @@ class MoneroRPC(JsonRPC):
         dest = [dict(amount=atomic_amt, address=address)]
         return self.transfer(destinations=dest, account_index=account_index, payment_id=payment_id, **kwargs)
 
+    def validate_address(self, address: str) -> dict:
+        """
+        Validate a monero address
+
+            >>> m = MoneroRPC(username='monero', password='somepass')
+            >>> m.validate_address(
+            ...    '8BNkere1xg7Jsbth2HbGBMdzFvgLDxpaJ4nmqqk72GFwVKGWpgPv3Xib1bEEx8hMt1PtpF3BiZws4dEovurWD73NDh9gFDj'
+            ... )
+            {'integrated': False, 'nettype': 'mainnet', 'openalias_address': '', 'subaddress': True, 'valid': True}
+
+
+        :param str address: A monero address
+        :return dict addr_info: dict(integrated:bool, nettype:str, openalias_address:str, subaddress:bool, valid:bool)
+        """
+        return self.call('validate_address', address=address)
+
