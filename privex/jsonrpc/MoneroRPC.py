@@ -212,7 +212,7 @@ class MoneroRPC(JsonRPC):
 
     def store(self) -> dict:
         """Save the wallet file"""
-        return self.call('store').get('result')
+        return self.call('store')
 
     def transfer(self, destinations: List[dict], account_index: int = 0, subaddr_indices: List[int] = [], priority: int = 0, 
                  mixin: int = 0, ring_size: int = 0, payment_id: str = "", **kwargs) -> dict:
