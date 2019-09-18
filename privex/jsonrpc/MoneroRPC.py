@@ -1,7 +1,9 @@
+from privex.helpers import empty
+
 from privex.jsonrpc.JsonRPC import JsonRPC
 from decimal import Decimal
 from typing import Union, List, Dict
-from privex.jsonrpc.objects import MoneroPayment
+from privex.jsonrpc.objects import MoneroPayment, MoneroTransfer
 from privex.jsonrpc.core import decimal_to_atomic, atomic_to_decimal
 
 
@@ -126,7 +128,53 @@ class MoneroRPC(JsonRPC):
         p = self.call('get_payments', payment_id=payment_id)
         payments = p.get('payments', [])
         return list(MoneroPayment.from_list(payments))
-    
+
+    def get_transfers(self, account_index=0, pending=True, incoming=True, outgoing=True,
+                      subaddr_indices: List[int] = None, **kw) -> Dict[str, List[MoneroTransfer]]:
+        """
+        Get incoming/outgoing transfers as a ``dict`` - generally with the keys ``in`` and ``out``
+
+        See :class:`.MoneroTransfer` for the attributes contained in each transfer object.
+
+        NOTE: As ``in`` is a protected Python keyword, ``in`` and ``out`` have been changed to ``incoming``
+        and ``outgoing``, however you can still use ``in`` and ``out`` if they're passed as kwargs using
+        ``**somedict`` with a quoted dictionary
+        e.g. ``get_transfers(account_index=1, **{"in": False, "out": True})``
+
+        Usage:
+
+            >>> m = MoneroRPC(username='monero', password='somepass')
+            >>> transfers = m.get_transfers(account_index=1)
+            >>> for t in transfers['in']:   # type: MoneroTransfer
+            ...     print(f'Received {t.decimal_amount:.4} XMR into address {t.address}')
+            ...
+            Received 1.000 XMR into address 77Vx9cs1VPicFndSVgYUvTdLCJEZw9h81hXL...
+            Received 2.473 XMR into address 55LTR8KniP4LQGJSPtbYDacR7dz8RBFnsfAKMa...
+            >>>
+
+
+        :param int account_index: (Default: 0) The account ID to get transfers for
+        :param bool pending:  (Default: True) Include unconfirmed transactions
+        :param bool incoming: (Default: True) List incoming transfers (``in``)
+        :param bool outgoing: (Default: True) List outgoing transfers (``out``)
+        :param list subaddr_indices: (Optional) A list of int sub-address indices to filter transfers for
+        :param Any kw: Any additional dictionary parameters to pass to get_transfers
+        :return dict transfers: dict(in: List[MoneroTransfer], out: List[MoneroTransfer])
+        """
+        _args = {
+            "account_index": account_index, "pending": pending,
+            "in": kw.get('in', incoming), "out": kw.get('out', outgoing),
+            "subaddr_indices": [] if empty(subaddr_indices, itr=True) else subaddr_indices, **kw
+        }
+        args = {k: v for k, v in _args.items() if v is not None}
+        t = self.call('get_transfers', **args)
+        res = {}
+        if 'in' in t:
+            res['in'] = list(MoneroTransfer.from_list(t['in']))
+        if 'out' in t:
+            res['out'] = list(MoneroTransfer.from_list(t['out']))
+        return {**res, **{k: v for k, v in t.items() if k not in ['in', 'out']}}
+
     def get_version(self) -> int:
         """
         Returns the RPC version as an integer, formatted with Major * 2^16 + Minor (Major encoded over the first 16 bits, 
