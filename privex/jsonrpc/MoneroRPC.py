@@ -157,7 +157,11 @@ class MoneroRPC(JsonRPC):
         if password is None:
             return self.call('open_wallet', filename=filename)
         return self.call('open_wallet', filename=filename, password=password)
-    
+
+    def close_wallet(self) -> dict:
+        """Close the current wallet (returns an empty dict)"""
+        return self.call('close_wallet')
+
     def store(self) -> dict:
         """Save the wallet file"""
         return self.call('store').get('result')
