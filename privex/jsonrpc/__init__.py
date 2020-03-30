@@ -3,11 +3,12 @@ import sys
 from .JsonRPC import JsonRPC, RPCException
 from .helpers import BitcoinRPC, LitecoinRPC, SteemEngineRPC
 from .MoneroRPC import MoneroRPC
+from .ElectrumRPC import ElectrumRPC, WalletNotLoaded, MethodNotFound, WalletLoadFailed
 from .objects import MoneroPayment, ObjBase
 
 name = 'jsonrpc'
 
-VERSION = '1.1.4'
+VERSION = '1.2.0'
 
 # If the privex.jsonrpc logger has no handlers, assume it hasn't been configured and set up a console logger
 # for any logs >=WARNING

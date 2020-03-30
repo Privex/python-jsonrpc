@@ -1,6 +1,7 @@
 import json
 import requests
 import logging
+from requests import HTTPError
 from requests.auth import HTTPDigestAuth
 from json import JSONDecodeError
 from decimal import Decimal
@@ -153,6 +154,9 @@ class JsonRPC:
                 r.raise_for_status()
             response = r.json()
             return response
+        except HTTPError as e:
+            log.warning("Error while querying RPC server %s - Response: %s", self.url, e.response.text)
+            raise e
         except JSONDecodeError as e:
             log.warning('JSONDecodeError while querying %s', self.url)
             log.warning('Params: %s', params)

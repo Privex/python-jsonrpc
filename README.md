@@ -54,6 +54,9 @@ The main classes included are:
     
     MoneroRPC      - For interacting with Monero Wallet RPC, includes various pre-defined methods to make things easier.
 
+    ElectrumRPC    - For interacting with Electrum Wallet RPC, includes various pre-defined methods to make things easier.
+                     Should work with Bitcoin Electrum, Electrum LTC, and others.
+
 ```
 
 
