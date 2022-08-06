@@ -181,7 +181,7 @@ class SteemEngineRPC(JsonRPC):
         |                                                   |
         +===================================================+
     """
-    DEF_HOST = 'api.steem-engine.com'
+    DEF_HOST = 'api.steem-engine.net'
     DEF_URL = '/rpc/contracts'
 
     def __init__(self, hostname=DEF_HOST, port=443, username=None, password=None, ssl=True, timeout=120, url=DEF_URL, auth='plain'):

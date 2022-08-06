@@ -8,7 +8,7 @@ from .objects import MoneroPayment, ObjBase
 
 name = 'jsonrpc'
 
-VERSION = '1.2.0'
+VERSION = '1.3.0'
 
 # If the privex.jsonrpc logger has no handlers, assume it hasn't been configured and set up a console logger
 # for any logs >=WARNING
