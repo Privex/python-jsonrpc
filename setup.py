@@ -56,6 +56,7 @@ setup(
     license='MIT',
     install_requires=[
         'requests>=2.20.1',
+        'privex-helpers>=2.10.0'
     ],
     packages=find_packages(),
     classifiers=[
